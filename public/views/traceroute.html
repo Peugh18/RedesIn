@@ -1,0 +1,80 @@
+<div class="view-header">
+  <h1 class="view-title">Traceroute</h1>
+  <p class="view-subtitle">Analisis de ruta y latencia por salto hacia un destino</p>
+</div>
+
+<div class="panel">
+  <div class="panel-header">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49M7.76 16.24a6 6 0 010-8.49"/></svg>
+      Ejecutar Traceroute
+    </div>
+  </div>
+  <div class="traceroute-form">
+    <input type="text" class="search-input" id="tracerouteTarget" placeholder="IP o dominio (ej: 8.8.8.8, google.com)" style="flex:1;max-width:300px" />
+    <button class="btn-scan" onclick="runTracerouteUI()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      Trazar Ruta
+    </button>
+  </div>
+  <div class="traceroute-presets">
+    <span class="trace-preset" onclick="setTraceTarget('8.8.8.8')">Google DNS (8.8.8.8)</span>
+    <span class="trace-preset" onclick="setTraceTarget('1.1.1.1')">Cloudflare (1.1.1.1)</span>
+    <span class="trace-preset" onclick="setTraceTarget('208.67.222.222')">OpenDNS</span>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:20px" id="tracerouteResultPanel" style="display:none">
+  <div class="panel-header">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Resultado
+    </div>
+    <span class="trace-target-label" id="traceTargetLabel"></span>
+  </div>
+  <div id="tracerouteResult">
+    <div class="empty-state" style="padding:30px 0">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:0.4"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 010 8.49"/><path d="M19.07 4.93a10 10 0 010 14.14"/></svg>
+      </div>
+      <p>Selecciona un destino y ejecuta el traceroute</p>
+    </div>
+  </div>
+</div>
+
+<!-- Throughput Panel -->
+<div class="panel" style="margin-top:20px">
+  <div class="panel-header">
+    <div class="panel-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:16px;height:16px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Throughput Real (hacia Gateway)
+    </div>
+    <button class="btn-scan" onclick="measureThroughputUI()" style="font-size:11px;padding:4px 10px">
+      Medir ahora
+    </button>
+  </div>
+  <div id="throughputResult">
+    <div class="throughput-grid">
+      <div class="throughput-card">
+        <div class="tp-label">Download</div>
+        <div class="tp-value" id="tpDownload">--</div>
+        <div class="tp-unit">Mbps</div>
+      </div>
+      <div class="throughput-card">
+        <div class="tp-label">Upload</div>
+        <div class="tp-value" id="tpUpload">--</div>
+        <div class="tp-unit">Mbps</div>
+      </div>
+      <div class="throughput-card">
+        <div class="tp-label">Latencia</div>
+        <div class="tp-value" id="tpLatency">--</div>
+        <div class="tp-unit">ms</div>
+      </div>
+      <div class="throughput-card">
+        <div class="tp-label">Destino</div>
+        <div class="tp-value tp-small" id="tpTarget">--</div>
+        <div class="tp-unit">gateway</div>
+      </div>
+    </div>
+  </div>
+</div>

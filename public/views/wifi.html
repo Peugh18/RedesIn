@@ -1,0 +1,63 @@
+<div class="view-header">
+  <h1 class="view-title">WiFi & Canales</h1>
+  <p class="view-subtitle">Analisis de redes inalambricas, propagacion y congestion de canales</p>
+</div>
+
+<div class="wifi-grid">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        Redes WiFi Cercanas
+      </div>
+      <div class="wifi-tabs">
+        <div class="wtab" id="tab24" onclick="setWifiTab('2.4')">2.4 GHz</div>
+        <div class="wtab" id="tab5" onclick="setWifiTab('5')">5 GHz</div>
+        <div class="wtab active" id="tabAll" onclick="setWifiTab('all')">Todas</div>
+      </div>
+    </div>
+    <div class="wifi-list" id="wifiList">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px;opacity:0.5"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><circle cx="12" cy="20" r="1"/></svg>
+        </div>
+        <p>Escaneando redes WiFi...</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        Mapa de Canales
+      </div>
+      <div class="channel-legend">
+        <span class="legend-dot low"></span> Libre
+        <span class="legend-dot med"></span> Medio
+        <span class="legend-dot high"></span> Saturado
+      </div>
+    </div>
+    <div class="channel-map" id="channelMap">
+      <div class="channel-subtitle">2.4 GHz — Canales 1-14</div>
+      <div class="channel-bars" id="channelBars24"></div>
+      <div class="channel-subtitle" style="margin-top:12px">5 GHz</div>
+      <div class="channel-bars" id="channelBars5"></div>
+    </div>
+    <div class="channel-recommendation" id="channelRecommendation" style="display:none;">
+      <div class="rec-title">Canal Optimo Recomendado</div>
+      <div class="rec-grid">
+        <div class="rec-item">
+          <span class="rec-band">2.4 GHz</span>
+          <span class="rec-channel" id="recChannel24">—</span>
+          <span class="rec-detail" id="recDetail24"></span>
+        </div>
+        <div class="rec-item">
+          <span class="rec-band">5 GHz</span>
+          <span class="rec-channel" id="recChannel5">—</span>
+          <span class="rec-detail" id="recDetail5"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
