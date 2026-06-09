@@ -68,8 +68,8 @@ function initTrafficChart() {
 
     const dlEl = document.getElementById('dl-speed');
     const ulEl = document.getElementById('ul-speed');
-    if (dlEl) dlEl.textContent = `${download.toFixed(2)} Mbps`;
-    if (ulEl) ulEl.textContent = `${upload.toFixed(2)} Mbps`;
+    if (dlEl) dlEl.textContent = `${(download !== null && download !== undefined) ? download.toFixed(2) : '0.00'} Mbps`;
+    if (ulEl) ulEl.textContent = `${(upload !== null && upload !== undefined) ? upload.toFixed(2) : '0.00'} Mbps`;
 
     dlData.push(download);
     ulData.push(upload);

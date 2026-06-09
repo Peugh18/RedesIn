@@ -44,19 +44,6 @@ function renderAlerts() {
   }).join('');
 }
 
-function addAlertLocal(type, message, severity = 'warning') {
-  const alert = {
-    id: Date.now(),
-    type,
-    message,
-    severity,
-    timestamp: new Date().toISOString()
-  };
-  alerts.unshift(alert);
-  if (alerts.length > 50) alerts.pop();
-  return alert;
-}
-
 function clearAlerts() {
   alerts = [];
   renderAlerts();

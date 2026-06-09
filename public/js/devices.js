@@ -75,7 +75,10 @@ function buildDeviceRow(d) {
   };
   const connLabel = connIcons[connType] || connIcons.unknown;
 
-  return `<tr onclick="openModal('${d.ip}')" class="fade-in">
+  const safeIp = d.ip ? escapeHtml(d.ip) : '';
+  if (!safeIp) return '';
+
+  return `<tr onclick="openModal('${safeIp}')" class="fade-in">
     <td>${statusBadge}</td>
     <td class="ip-cell">${d.ip}</td>
     <td class="hostname-cell">${escapeHtml(d.hostname || d.ip)}${localTag}</td>
@@ -117,4 +120,6 @@ function setFilter(f) {
   renderDevices();
 }
 
-function filterDevices() { renderDevices(); }
+function filterDevices() {
+  renderDevices();
+}

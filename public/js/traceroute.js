@@ -23,10 +23,12 @@ async function runTracerouteUI() {
 
   try {
     const res = await fetch(`/api/traceroute/${encodeURIComponent(target)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderTracerouteResult(data);
   } catch (e) {
-    resultContainer.innerHTML = '<div class="empty-state"><p>Error al ejecutar traceroute</p></div>';
+    console.error('Traceroute error:', e.message);
+    resultContainer.innerHTML = '<div class="empty-state"><p>Error al ejecutar traceroute. Verifica que el destino sea válido.</p></div>';
   }
 }
 
@@ -92,19 +94,16 @@ async function measureThroughputUI() {
 
   try {
     const res = await fetch('/api/throughput');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    if (dlEl) dlEl.textContent = data.download || '0';
-    if (ulEl) ulEl.textContent = data.upload || '0';
-    if (latEl) latEl.textContent = data.latency || '--';
-    if (tgtEl) tgtEl.textContent = data.target || '--';
+    if (dlEl) dlEl.textContent = data.download ?? '--';
+    if (ulEl) ulEl.textContent = data.upload ?? '--';
+    if (latEl) latEl.textContent = data.latency ?? '--';
+    if (tgtEl) tgtEl.textContent = data.target ?? '--';
   } catch (e) {
+    console.error('Throughput error:', e.message);
     if (dlEl) dlEl.textContent = 'Error';
+    if (ulEl) ulEl.textContent = 'Error';
   }
 }
 
-// Listen for real-time throughput updates
-if (typeof socket !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    // Will be set up after socket connects
-  });
-}

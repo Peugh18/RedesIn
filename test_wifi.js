@@ -20,7 +20,7 @@ function parseWindowsWifi(output) {
     const signalMatch = block.match(/(?:Signal|Se.al)\s*:\s*(\d+)%/i);
     const channelMatch = block.match(/(?:Channel|Canal)\s*:\s*(\d+)/i);
     const radioMatch = block.match(/(?:Radio type|Tipo de radio)\s*:\s*(.+)/i);
-    const authMatch = block.match(/(?:Authentication|Autenticaci.n)\s*:\s*(.+)/i);
+    const authMatch = block.match(/(?:Authentication|Autenticaci[óo]n)\s*:\s*(.+)/i);
     const freqMatch = block.match(/(?:Band|Banda)\s*:\s*(.+)/i);
     
     if (!ssidMatch) continue;

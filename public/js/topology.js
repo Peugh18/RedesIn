@@ -6,18 +6,26 @@
 async function loadTopology() {
   try {
     const res = await fetch('/api/topology');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderTopologyMap(data);
   } catch (e) {
-    console.error('Topology load error:', e);
+    console.error('Error cargando topología:', e.message);
+    const container = document.getElementById('topologyCanvas');
+    if (container) {
+      container.innerHTML = '<div class="empty-state"><p>Error al cargar topología</p></div>';
+    }
   }
 
   // Also load ARP analysis
   try {
     const res = await fetch('/api/arp/analysis');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     renderArpAnalysis(data);
-  } catch (e) {}
+  } catch (e) {
+    console.warn('Error cargando análisis ARP:', e.message);
+  }
 }
 
 function renderTopologyMap(data) {
@@ -52,7 +60,7 @@ function renderTopologyMap(data) {
     node._y = y;
 
     const link = links.find(l => l.target === node.id);
-    const strokeColor = link
+    const strokeColor = link && link.quality
       ? (link.quality === 'critical' ? 'var(--red)' : link.quality === 'warning' ? 'var(--orange)' : 'var(--green)')
       : 'var(--border)';
     const dashArray = node.status === 'offline' ? '4,4' : 'none';

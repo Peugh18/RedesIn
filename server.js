@@ -281,19 +281,6 @@ async function getMacVendor(mac) {
   }
 }
 
-// Versión sincrónica para compatibilidad hacia atrás donde async no es posible
-function getMacVendorSync(mac) {
-  if (!mac) return 'Unknown';
-  const prefix = mac.replace(/[:-]/g, '').substring(0, 6).toUpperCase();
-  if (macVendorCache[prefix]) return macVendorCache[prefix];
-  try {
-    const oui = require('oui');
-    const vendor = oui(mac);
-    if (vendor) { macVendorCache[prefix] = vendor; return vendor; }
-  } catch (e) {}
-  return 'Unknown';
-}
-
 /**
  * Obtener tabla ARP del sistema operativo
  */
@@ -339,7 +326,10 @@ function scanWifi() {
   return new Promise((resolve) => {
     if (process.platform === 'win32') {
       // Forzar un escaneo primero (esto toma un momento pero asegura datos frescos)
-      exec('netsh wlan scan', { timeout: 5000 }, () => {
+      exec('netsh wlan scan', { timeout: 5000 }, (scanErr) => {
+        if (scanErr) {
+          console.warn('WiFi scan requiere privilegios de administrador:', scanErr.message);
+        }
         exec('netsh wlan show networks mode=bssid', { timeout: 8000 }, (err, stdout) => {
           if (err || !stdout) return resolve([]);
           resolve(parseWindowsWifi(stdout));
@@ -778,7 +768,8 @@ function evaluateSecurityRisk(security) {
   if (security === 'WEP') {
     return { level: 'high', label: 'WEP (obsoleto)', description: 'Cifrado roto — se puede crackear en minutos' };
   }
-  if (security === 'WPA' && !security.includes('2') && !security.includes('3')) {
+  const secUpper = (security || '').toUpperCase();
+  if (secUpper === 'WPA' && !secUpper.includes('WPA2') && !secUpper.includes('WPA3')) {
     return { level: 'medium', label: 'WPA (antiguo)', description: 'Vulnerable a ataques TKIP — usar WPA2/WPA3' };
   }
   if (security === 'WPA2') {
@@ -1209,12 +1200,6 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-app.post('/api/scan', async (req, res) => {
-  if (state.scanning) return res.json({ status: 'escaneo_en_curso' });
-  res.json({ status: 'iniciado' });
-  scanNetwork();
-});
-
 // Topology endpoint
 app.get('/api/topology', (req, res) => {
   res.json(generateTopology());
@@ -1244,32 +1229,6 @@ app.get('/api/traceroute/:target', async (req, res) => {
 app.get('/api/throughput', async (req, res) => {
   const result = await measureThroughput();
   res.json(result);
-});
-
-// ─────────────────────────────────────────────
-// FUTURE PHASES PREPARATION
-// ─────────────────────────────────────────────
-
-// IA para detección de degradación (fase futura)
-app.get('/api/ai/analyze', (req, res) => {
-  res.json({ status: 'no_implementado', message: 'Módulo de análisis con IA pendiente' });
-});
-
-// Métricas históricas (fase futura)
-app.get('/api/metrics/history', (req, res) => {
-  // Devuelve historial real del estado en memoria
-  const history = Object.values(state.devices).map(d => ({
-    ip: d.ip,
-    hostname: d.hostname,
-    latencyHistory: d.latencyHistory || [],
-    lastSeen: d.lastSeen
-  }));
-  res.json({ status: 'ok', data: history });
-});
-
-// Exportación de alertas como JSON
-app.get('/api/logs/export', (req, res) => {
-  res.json({ status: 'ok', alertas: state.alerts, dispositivos: Object.values(state.devices) });
 });
 
 // ─────────────────────────────────────────────
@@ -1344,8 +1303,9 @@ async function startMonitoring() {
 // 
 
 server.listen(PORT, () => {
+  console.log(`╔════════════════════════════════════════╗`);
   console.log(`║   NetScope Pro — Network Monitor       ║`);
-  
-  console.log(`║  Dashboard: http://localhost:${PORT}       ║`);
+  console.log(`║   Dashboard: http://localhost:${PORT}       ║`);
+  console.log(`╚════════════════════════════════════════╝`);
   startMonitoring();
 });

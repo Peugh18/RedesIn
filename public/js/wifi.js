@@ -125,16 +125,21 @@ function renderChannelMap() {
 }
 
 function renderChannelRecommendation(rec) {
-  if (!rec) return;
+  if (!rec || !rec.recommended24 || !rec.recommended5) return;
   const wrap = document.getElementById('channelRecommendation');
   if (!wrap) return;
   wrap.style.display = 'block';
 
-  document.getElementById('recChannel24').textContent = `Canal ${rec.recommended24.channel}`;
-  document.getElementById('recDetail24').textContent =
+  const rec24 = document.getElementById('recChannel24');
+  const rec5 = document.getElementById('recChannel5');
+  const det24 = document.getElementById('recDetail24');
+  const det5 = document.getElementById('recDetail5');
+
+  if (rec24) rec24.textContent = `Canal ${rec.recommended24.channel}`;
+  if (det24) det24.textContent =
     rec.recommended24.interference === 0 ? 'Sin interferencia' : `Interferencia: ${rec.recommended24.interference}`;
 
-  document.getElementById('recChannel5').textContent = `Canal ${rec.recommended5.channel}`;
-  document.getElementById('recDetail5').textContent =
+  if (rec5) rec5.textContent = `Canal ${rec.recommended5.channel}`;
+  if (det5) det5.textContent =
     rec.recommended5.interference === 0 ? 'Sin interferencia' : `Interferencia: ${rec.recommended5.interference}`;
 }
