@@ -29,25 +29,28 @@ function initSocket() {
   });
 
   socket.on('wifi_update', (data) => {
-    if (data.networks) {
+    // Solo actualizar redes si hay datos nuevos o si es un note (mantener anteriores)
+    if (data.networks && data.networks.length > 0) {
       allWifi = data.networks;
       renderWifi();
       renderChannelMap();
       renderSecurityPanel();
       updateMetrics();
+    } else if (data.note && allWifi.length > 0) {
+      // Backend indica que mantiene redes anteriores - no hacer nada
+      console.log('WiFi:', data.note);
     }
+    
     if (data.channelRecommendation) {
       renderChannelRecommendation(data.channelRecommendation);
     }
-    // Mostrar advertencias o errores del escaneo WiFi
-    if (data.warning || data.error) {
+    
+    // Mostrar advertencias solo si no hay redes y es primera vez
+    if ((data.warning || data.error) && allWifi.length === 0) {
       console.warn('WiFi scan issue:', data.warning || data.error);
-      // Actualizar mensaje en la lista de WiFi si está vacía
-      if (allWifi.length === 0) {
-        const container = document.getElementById('wifiList');
-        if (container) {
-          container.innerHTML = `<div class="empty-state"><div class="empty-icon" style="color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><p style="color:var(--orange)">${data.warning || data.error}</p><p style="font-size:11px;color:var(--text-dim);margin-top:8px">Último escaneo: ${data.lastScan ? new Date(data.lastScan).toLocaleTimeString() : 'N/A'}</p></div>`;
-        }
+      const container = document.getElementById('wifiList');
+      if (container) {
+        container.innerHTML = `<div class="empty-state"><div class="empty-icon" style="color:var(--orange)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:28px;height:28px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><p style="color:var(--orange)">${data.warning || data.error}</p><p style="font-size:11px;color:var(--text-dim);margin-top:8px">Último escaneo: ${data.lastScan ? new Date(data.lastScan).toLocaleTimeString() : 'N/A'}</p></div>`;
       }
     }
   });

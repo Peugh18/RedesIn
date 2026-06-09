@@ -846,20 +846,44 @@ async function scanWifiNetworks() {
         lastScan: new Date().toISOString()
       });
     } else {
-      // No se detectaron redes - notificar al frontend
-      io.emit('wifi_update', { 
-        networks: [],
-        channelRecommendation: null,
-        lastScan: new Date().toISOString(),
-        warning: 'No se detectaron redes WiFi. Verifica: (1) Privilegios de administrador, (2) WiFi activado, (3) Driver de tarjeta de red'
-      });
+      // No se detectaron redes en este escaneo - NO borrar redes anteriores
+      // Podría ser un glitch temporal de Windows
+      console.warn('WiFi scan: No se detectaron redes en este ciclo, manteniendo redes anteriores');
+      
+      // Solo enviar advertencia si nunca se han detectado redes
+      if (!state.wifiNetworks || state.wifiNetworks.length === 0) {
+        io.emit('wifi_update', { 
+          networks: [],
+          channelRecommendation: null,
+          lastScan: new Date().toISOString(),
+          warning: 'No se detectaron redes WiFi. Verifica: (1) Ejecutar como Administrador, (2) WiFi activado, (3) Driver actualizado'
+        });
+      } else {
+        // Mantener redes existentes y notificar que el escaneo sigue activo
+        io.emit('wifi_update', { 
+          networks: state.wifiNetworks,
+          channelRecommendation: state.channelRecommendation,
+          lastScan: new Date().toISOString(),
+          note: 'Escaneo activo - redes mantenidas de ciclo anterior'
+        });
+      }
     }
   } catch (e) {
     console.error('WiFi scan error:', e);
-    io.emit('wifi_update', { 
-      networks: [],
-      error: 'Error en escaneo WiFi: ' + e.message
-    });
+    // NO borrar redes existentes en caso de error temporal
+    if (state.wifiNetworks && state.wifiNetworks.length > 0) {
+      io.emit('wifi_update', { 
+        networks: state.wifiNetworks,
+        channelRecommendation: state.channelRecommendation,
+        lastScan: new Date().toISOString(),
+        note: 'Error temporal en escaneo - manteniendo redes detectadas'
+      });
+    } else {
+      io.emit('wifi_update', { 
+        networks: [],
+        error: 'Error en escaneo WiFi: ' + e.message
+      });
+    }
   }
 }
 
@@ -1265,6 +1289,11 @@ io.on('connection', (socket) => {
     scanWifiNetworks(); // Force a fresh wifi scan too
   });
 
+  socket.on('request_wifi_scan', () => {
+    console.log('Manual WiFi scan requested by client');
+    scanWifiNetworks(); // Force immediate WiFi scan
+  });
+
   socket.on('disconnect', () => {
     console.log(`Client disconnected: ${socket.id}`);
   });
@@ -1288,9 +1317,9 @@ async function startMonitoring() {
   // Start network scan (don't await so we don't block WiFi)
   scanNetwork();
 
-  // WiFi scan starts immediately
+  // WiFi scan starts immediately - auto cada 15s (balance entre frescura y rendimiento)
   scanWifiNetworks();
-  setInterval(scanWifiNetworks, 30000);
+  setInterval(scanWifiNetworks, 15000);
 
   // Continuous ping monitor every 5 seconds
   setInterval(continuousMonitor, 5000);

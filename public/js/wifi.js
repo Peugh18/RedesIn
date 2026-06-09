@@ -77,6 +77,24 @@ function setWifiTab(tab) {
   renderWifi();
 }
 
+// Escanear WiFi manualmente (botón "Escanear Ahora")
+function requestWifiScan() {
+  if (socket) {
+    socket.emit('request_wifi_scan');
+    // Mostrar feedback visual
+    const btn = document.querySelector('.btn-scan-wifi');
+    if (btn) {
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;vertical-align:middle;margin-right:3px;animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>Escaneando...';
+      btn.disabled = true;
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }, 3000);
+    }
+  }
+}
+
 function renderChannelMap() {
   const chCount24 = {};
   const chCount5 = {};
