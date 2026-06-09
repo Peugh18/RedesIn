@@ -3,6 +3,124 @@
  * Renderizado y filtrado de dispositivos de la red
  */
 
+// Función para identificar tipo específico de dispositivo
+function getDeviceType(hostname, vendor, connectionType) {
+  const h = (hostname || '').toLowerCase();
+  const v = (vendor || '').toLowerCase();
+  
+  // Celulares/Tablets por hostname
+  if (h.includes('iphone') || h.includes('ipad') || h.includes('android') || 
+      h.includes('galaxy') || h.includes('pixel') || h.includes('xiaomi') ||
+      h.includes('redmi') || h.includes('oppo') || h.includes('vivo') ||
+      h.includes('huawei') || h.includes('oneplus') || h.includes('motorola')) {
+    return h.includes('ipad') ? '📱 Tablet' : '📱 Celular';
+  }
+  
+  // Laptops/PCs por hostname
+  if (h.includes('desktop') || h.includes('laptop') || h.includes('notebook') ||
+      h.includes('pc-') || h.includes('computer') || h.includes('hp-') ||
+      h.includes('dell-') || h.includes('lenovo') || h.includes('asus')) {
+    return '💻 Laptop/PC';
+  }
+  
+  // Celulares por fabricante
+  if (v.includes('apple') && connectionType === 'wireless') {
+    return '📱 iPhone/iPad';
+  }
+  if (v.includes('samsung') && connectionType === 'wireless') {
+    return '📱 Samsung (Celular/Tablet)';
+  }
+  if (v.includes('xiaomi') || v.includes('redmi') || v.includes('oppo') ||
+      v.includes('vivo') || v.includes('oneplus') || v.includes('realme')) {
+    return '📱 Celular Android';
+  }
+  if (v.includes('huawei') || v.includes('honor')) {
+    return '📱 Huawei/Honor';
+  }
+  if (v.includes('motorola') || v.includes('lenovo')) {
+    return '📱 Motorola';
+  }
+  
+  // Laptops por fabricante
+  if (v.includes('apple') && connectionType !== 'wireless') {
+    return '💻 MacBook/iMac';
+  }
+  if (v.includes('hewlett-packard') || v.includes('hp')) {
+    return '💻 Laptop HP';
+  }
+  if (v.includes('dell')) {
+    return '💻 Laptop Dell';
+  }
+  if (v.includes('lenovo') && connectionType !== 'wireless') {
+    return '💻 Laptop Lenovo';
+  }
+  if (v.includes('asus')) {
+    return '💻 Laptop ASUS';
+  }
+  if (v.includes('acer')) {
+    return '💻 Laptop Acer';
+  }
+  if (v.includes('microsoft')) {
+    return '💻 Surface/PC';
+  }
+  
+  // IoT / Smart TV
+  if (v.includes('tcl') || v.includes('hisense') || v.includes('skyworth')) {
+    return '📺 Smart TV';
+  }
+  if (v.includes('lg') && connectionType === 'wireless') {
+    return '📺 LG Smart TV';
+  }
+  if (v.includes('sony')) {
+    return connectionType === 'wireless' ? '📺 Sony TV' : '💻 VAIO/PlayStation';
+  }
+  if (v.includes('chromecast') || v.includes('roku') || v.includes('firetv')) {
+    return '📺 Streaming Device';
+  }
+  
+  // IoT específicos
+  if (v.includes('espressif') || v.includes('tuya') || v.includes('smart')) {
+    return '🔌 IoT/Smart Device';
+  }
+  if (v.includes('philips') || v.includes('hue')) {
+    return '💡 Smart Light';
+  }
+  if (v.includes('ring') || v.includes('nest')) {
+    return '📹 Cámara Inteligente';
+  }
+  
+  // Consolas
+  if (v.includes('sony') || h.includes('playstation') || h.includes('ps4') || h.includes('ps5')) {
+    return '🎮 PlayStation';
+  }
+  if (v.includes('microsoft') || h.includes('xbox')) {
+    return '🎮 Xbox';
+  }
+  if (v.includes('nintendo')) {
+    return '🎮 Nintendo';
+  }
+  
+  // Impresoras
+  if (v.includes('canon') || v.includes('hp') || v.includes('epson') || 
+      v.includes('brother') || v.includes('xerox')) {
+    return '🖨️ Impresora';
+  }
+  
+  // Routers/APs
+  if (v.includes('cisco') || v.includes('ubiquiti') || v.includes('mikrotik') ||
+      v.includes('tp-link') || v.includes('netgear') || v.includes('d-link') ||
+      v.includes('linksys') || v.includes('asus') && h.includes('router')) {
+    return '📶 Router/AP';
+  }
+  
+  // Por defecto basado en connectionType
+  if (connectionType === 'wireless') return '📱 Dispositivo Móvil';
+  if (connectionType === 'wired') return '💻 Equipo Cableado';
+  if (connectionType === 'iot') return '🔌 Dispositivo IoT';
+  
+  return '❓ Desconocido';
+}
+
 function renderDevices() {
   const searchEl = document.getElementById('deviceSearch');
   const search = searchEl ? searchEl.value.toLowerCase() : '';
@@ -67,6 +185,11 @@ function buildDeviceRow(d) {
   const vendorRaw = etiquetaFabricante(d.vendor);
   const vendor = vendorRaw !== '—' ? vendorRaw.slice(0, 18) : '—';
   const connType = d.connectionType || 'unknown';
+  
+  // Obtener tipo específico de dispositivo (Celular, Laptop, TV, etc.)
+  const deviceType = getDeviceType(d.hostname, d.vendor, connType);
+  
+  // Iconos para tipo de conexión (WiFi/Ethernet/IoT)
   const connIcons = {
     wireless: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>WiFi',
     wired: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"><rect x="2" y="7" width="20" height="10" rx="2"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/></svg>Ethernet',
@@ -83,7 +206,8 @@ function buildDeviceRow(d) {
     <td class="ip-cell">${d.ip}</td>
     <td class="hostname-cell">${escapeHtml(d.hostname || d.ip)}${localTag}</td>
     <td class="mac-cell">${mac}</td>
-    <td style="font-size:11px;color:var(--text-sec);max-width:120px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(vendor)}</td>
+    <td style="font-size:11px;color:var(--text-sec);max-width:100px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(vendor)}</td>
+    <td style="font-size:11px;white-space:nowrap">${deviceType}</td>
     <td><span class="conn-type-badge ${connType}">${connLabel}</span></td>
     <td>${latencyStr}</td>
     <td>${jitterStr}</td>

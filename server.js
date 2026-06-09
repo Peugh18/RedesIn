@@ -842,11 +842,24 @@ async function scanWifiNetworks() {
       state.wifiNetworks = networks;
       io.emit('wifi_update', { 
         networks: state.wifiNetworks,
-        channelRecommendation: state.channelRecommendation
+        channelRecommendation: state.channelRecommendation,
+        lastScan: new Date().toISOString()
+      });
+    } else {
+      // No se detectaron redes - notificar al frontend
+      io.emit('wifi_update', { 
+        networks: [],
+        channelRecommendation: null,
+        lastScan: new Date().toISOString(),
+        warning: 'No se detectaron redes WiFi. Verifica: (1) Privilegios de administrador, (2) WiFi activado, (3) Driver de tarjeta de red'
       });
     }
   } catch (e) {
     console.error('WiFi scan error:', e);
+    io.emit('wifi_update', { 
+      networks: [],
+      error: 'Error en escaneo WiFi: ' + e.message
+    });
   }
 }
 
