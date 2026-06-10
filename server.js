@@ -12,7 +12,6 @@ const os = require('os');
 const ping = require('ping');
 const arp = require('node-arp');
 const ip = require('ip');
-const oui = require('oui');
 const https = require('https');
 
 const app = express();
@@ -355,6 +354,7 @@ async function getMacVendor(mac) {
 
   // Intentar base de datos OUI local
   try {
+    const oui = require('oui');
     const vendor = oui(mac);
     if (vendor && vendor !== 'Unknown') {
       macVendorCache.set(prefix, vendor);
