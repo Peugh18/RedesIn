@@ -12,6 +12,8 @@ const os = require('os');
 const ping = require('ping');
 const arp = require('node-arp');
 const ip = require('ip');
+const oui = require('oui');
+const https = require('https');
 
 const app = express();
 const server = http.createServer(app);
@@ -19,11 +21,93 @@ const io = new Server(server, {
   cors: { origin: '*' }
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+
+// ═══════════════════════════════════════════════════════════
+// LOGGER ESTRUCTURADO
+// ═══════════════════════════════════════════════════════════
+const logger = {
+  info: (msg, data = {}) => console.log(`[INFO] ${new Date().toISOString()} - ${msg}`, data),
+  warn: (msg, data = {}) => console.warn(`[WARN] ${new Date().toISOString()} - ${msg}`, data),
+  error: (msg, data = {}) => console.error(`[ERROR] ${new Date().toISOString()} - ${msg}`, data),
+  debug: (msg, data = {}) => process.env.DEBUG && console.log(`[DEBUG] ${new Date().toISOString()} - ${msg}`, data)
+};
+
+// ═══════════════════════════════════════════════════════════
+// CONFIGURACIÓN Y CONSTANTES
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  SCAN_INTERVAL: 15000,        // 15 segundos
+  PING_INTERVAL: 5000,         // 5 segundos
+  FULL_SCAN_INTERVAL: 60000,   // 60 segundos
+  ARP_CHECK_INTERVAL: 15000,   // 15 segundos
+  HOSTNAME_CACHE_TTL: 3600000, // 1 hora
+  MAC_VENDOR_CACHE_MAX: 1000,  // Máximo de entradas en caché
+  API_TIMEOUT: 1000,           // Timeout para APIs externas
+  HOSTNAME_TIMEOUT: 500,       // Timeout para resolución de hostname
+  MAX_ALERTS: 50,              // Máximo de alertas guardadas
+  BATCH_SIZE: 30               // Tamaño de batch para ping sweep
+};
+
+// ═══════════════════════════════════════════════════════════
+// CACHÉ CON LÍMITE DE TAMAÑO
+// ═══════════════════════════════════════════════════════════
+class LimitedCache {
+  constructor(maxSize = 1000) {
+    this.maxSize = maxSize;
+    this.cache = {};
+    this.keys = [];
+  }
+
+  set(key, value) {
+    if (this.cache[key]) {
+      // Remover de la lista si ya existe
+      this.keys = this.keys.filter(k => k !== key);
+    } else if (this.keys.length >= this.maxSize) {
+      // Remover el más antiguo
+      const oldKey = this.keys.shift();
+      delete this.cache[oldKey];
+    }
+    this.cache[key] = value;
+    this.keys.push(key);
+  }
+
+  get(key) {
+    return this.cache[key];
+  }
+
+  has(key) {
+    return key in this.cache;
+  }
+}
+
+const macVendorCache = new LimitedCache(CONFIG.MAC_VENDOR_CACHE_MAX);
+const hostnameCache = new LimitedCache(1000);
 
 // Archivos estáticos
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// ═══════════════════════════════════════════════════════════
+// MIDDLEWARE DE VALIDACIÓN
+// ═══════════════════════════════════════════════════════════
+const validateIP = (ip) => {
+  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
+  if (!ipRegex.test(ip)) return false;
+  const parts = ip.split('.').map(Number);
+  return parts.every(p => p >= 0 && p <= 255);
+};
+
+const validateHostname = (hostname) => {
+  // Permite IPs y dominios válidos
+  return /^[\w.-]+$/.test(hostname) && hostname.length <= 255;
+};
+
+// Middleware de error global
+app.use((err, req, res, next) => {
+  logger.error('Express error', { message: err.message, path: req.path });
+  res.status(500).json({ error: 'Error interno del servidor' });
+});
 
 // Utilidades de red
 
@@ -196,27 +280,47 @@ async function multiPing(host, count = 4) {
 }
 
 /**
- * Resolver nombre de host desde IP
+ * @async
+ * @function resolveHostname
+ * @description Resuelve el hostname de una IP con caché
+ * @param {string} ip - Dirección IP
+ * @returns {Promise<string|null>} Hostname o null
  */
-function resolveHostname(ip) {
+async function resolveHostname(ip) {
+  // Verificar caché primero
+  if (hostnameCache.has(ip)) {
+    return hostnameCache.get(ip);
+  }
+
   return new Promise((resolve) => {
-    if (process.platform === 'win32') {
-      exec(`nslookup ${ip}`, { timeout: 2000 }, (err, stdout) => {
-        if (!err && stdout) {
-          const match = stdout.match(/Name:\s+(.+)/);
-          if (match) return resolve(match[1].trim().split('.')[0]);
+    const cmd = process.platform === 'win32' 
+      ? `nslookup ${ip}` 
+      : `host ${ip}`;
+    
+    const timeout = setTimeout(() => {
+      resolve(null);
+    }, CONFIG.HOSTNAME_TIMEOUT);
+
+    exec(cmd, { timeout: CONFIG.HOSTNAME_TIMEOUT }, (err, stdout) => {
+      clearTimeout(timeout);
+      
+      let hostname = null;
+      if (!err && stdout) {
+        const match = process.platform === 'win32'
+          ? stdout.match(/Name:\s+(.+)/)
+          : stdout.match(/pointer (.+)\./);
+        
+        if (match) {
+          hostname = match[1].trim().split('.')[0];
         }
-        resolve(null);
-      });
-    } else {
-      exec(`host ${ip}`, { timeout: 2000 }, (err, stdout) => {
-        if (!err && stdout) {
-          const match = stdout.match(/pointer (.+)\./);
-          if (match) return resolve(match[1].trim().split('.')[0]);
-        }
-        resolve(null);
-      });
-    }
+      }
+      
+      // Guardar en caché incluso si es null
+      if (hostname) {
+        hostnameCache.set(ip, hostname);
+      }
+      resolve(hostname);
+    });
   });
 }
 
@@ -233,33 +337,38 @@ function getMacAddress(ipAddr) {
 }
 
 /**
- * Buscar fabricante desde MAC (OUI) - Base de datos local + alternativa API con caché
+ * @async
+ * @function getMacVendor
+ * @description Obtiene el fabricante de un dispositivo por su dirección MAC
+ * @param {string} mac - Dirección MAC del dispositivo
+ * @returns {Promise<string>} Nombre del fabricante o 'Desconocido'
  */
-const macVendorCache = {};
-
 async function getMacVendor(mac) {
   if (!mac) return 'Desconocido';
   
-  // Verificar caché primero
   const prefix = mac.replace(/[:-]/g, '').substring(0, 6).toUpperCase();
-  if (macVendorCache[prefix]) return macVendorCache[prefix];
+  
+  // Verificar caché primero
+  if (macVendorCache.has(prefix)) {
+    return macVendorCache.get(prefix);
+  }
 
   // Intentar base de datos OUI local
   try {
-    const oui = require('oui');
     const vendor = oui(mac);
     if (vendor && vendor !== 'Unknown') {
-      macVendorCache[prefix] = vendor;
+      macVendorCache.set(prefix, vendor);
       return vendor;
     }
-  } catch (e) {}
+  } catch (e) {
+    logger.debug('OUI lookup failed', { mac, error: e.message });
+  }
 
   // Alternativa: API de macvendors.io (gratuita, sin clave necesaria)
   try {
-    const https = require('https');
-    const result = await new Promise((resolve, reject) => {
+    const result = await new Promise((resolve) => {
       const req = https.get(`https://api.macvendors.com/${encodeURIComponent(mac)}`, {
-        timeout: 3000
+        timeout: CONFIG.API_TIMEOUT
       }, (res) => {
         let data = '';
         res.on('data', chunk => data += chunk);
@@ -267,16 +376,26 @@ async function getMacVendor(mac) {
           if (res.statusCode === 200 && data && !data.includes('Not Found')) {
             resolve(data.trim());
           } else {
-            resolve('Unknown');
+            resolve('Desconocido');
           }
         });
       });
-      req.on('error', () => resolve('Unknown'));
-      req.on('timeout', () => { req.destroy(); resolve('Unknown'); });
+      req.on('error', () => {
+        logger.debug('macvendors.io API error', { mac });
+        resolve('Desconocido');
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        resolve('Desconocido');
+      });
     });
-    macVendorCache[prefix] = result;
+    
+    if (result !== 'Desconocido') {
+      macVendorCache.set(prefix, result);
+    }
     return result;
   } catch (e) {
+    logger.debug('MAC vendor lookup error', { mac, error: e.message });
     return 'Desconocido';
   }
 }
@@ -1251,15 +1370,38 @@ app.get('/api/arp/analysis', (req, res) => {
   res.json({ devices, anomalies, scannedAt: new Date().toISOString() });
 });
 
-// Traceroute endpoint
+/**
+ * @route GET /api/traceroute/:target
+ * @description Ejecuta traceroute a un destino específico
+ * @param {string} target - IP o dominio destino
+ * @returns {Object} Resultado de traceroute con hops
+ */
 app.get('/api/traceroute/:target', async (req, res) => {
-  const target = req.params.target;
-  // Basic validation
-  if (!/^[\d.]+$/.test(target) && !/^[\w.-]+$/.test(target)) {
-    return res.status(400).json({ error: 'Destino no válido' });
+  const target = req.params.target.trim();
+  
+  // Validación estricta: IP o dominio válido
+  const isValidIP = validateIP(target);
+  const isValidHostname = validateHostname(target);
+  
+  if (!isValidIP && !isValidHostname) {
+    logger.warn('Invalid traceroute target', { target });
+    return res.status(400).json({ 
+      error: 'Destino no válido. Use una IP o dominio válido.' 
+    });
   }
-  const hops = await runTraceroute(target);
-  res.json({ target, hops, timestamp: new Date().toISOString() });
+  
+  try {
+    const hops = await runTraceroute(target);
+    res.json({ 
+      target, 
+      hops, 
+      timestamp: new Date().toISOString(),
+      success: hops.length > 0
+    });
+  } catch (e) {
+    logger.error('Traceroute error', { target, error: e.message });
+    res.status(500).json({ error: 'Error ejecutando traceroute' });
+  }
 });
 
 // Throughput measurement endpoint
@@ -1307,47 +1449,134 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// 
-// Scheduler
-// 
-
-async function startMonitoring() {
-  console.log('Starting initial network scan...');
+// ═══════════════════════════════════════════════════════════
+// MÉTRICAS DE RENDIMIENTO
+// ═══════════════════════════════════════════════════════════
+const metrics = {
+  startTime: Date.now(),
+  scansCompleted: 0,
+  devicesDiscovered: 0,
+  alertsGenerated: 0,
   
-  // Start network scan (don't await so we don't block WiFi)
+  getUptime() {
+    return Math.floor((Date.now() - this.startTime) / 1000);
+  },
+  
+  getStats() {
+    return {
+      uptime: this.getUptime(),
+      scansCompleted: this.scansCompleted,
+      devicesDiscovered: this.devicesDiscovered,
+      alertsGenerated: this.alertsGenerated,
+      memoryUsage: process.memoryUsage(),
+      timestamp: new Date().toISOString()
+    };
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// SCHEDULER Y MONITOREO
+// ═══════════════════════════════════════════════════════════
+
+const intervals = [];
+
+/**
+ * @async
+ * @function startMonitoring
+ * @description Inicia todos los intervalos de monitoreo
+ */
+async function startMonitoring() {
+  logger.info('Iniciando monitoreo de red...');
+  
+  // Escaneo inicial de red
   scanNetwork();
 
-  // WiFi scan starts immediately - auto cada 15s (balance entre frescura y rendimiento)
+  // WiFi scan cada 15 segundos
   scanWifiNetworks();
-  setInterval(scanWifiNetworks, 15000);
+  intervals.push(setInterval(scanWifiNetworks, CONFIG.SCAN_INTERVAL));
 
-  // Continuous ping monitor every 5 seconds
-  setInterval(continuousMonitor, 5000);
+  // Monitor continuo de ping cada 5 segundos
+  intervals.push(setInterval(continuousMonitor, CONFIG.PING_INTERVAL));
 
-  // Full rescan every 60 seconds
-  setInterval(scanNetwork, 60000);
+  // Escaneo completo cada 60 segundos
+  intervals.push(setInterval(() => {
+    scanNetwork();
+    metrics.scansCompleted++;
+  }, CONFIG.FULL_SCAN_INTERVAL));
 
-  // ARP spoofing check every 15 seconds
-  setInterval(detectArpSpoofing, 15000);
+  // Detección de ARP spoofing cada 15 segundos
+  intervals.push(setInterval(detectArpSpoofing, CONFIG.ARP_CHECK_INTERVAL));
 
-  // Throughput measurement every 20 seconds
-  setInterval(async () => {
+  // Medición de throughput cada 20 segundos
+  intervals.push(setInterval(async () => {
     state.throughput = await measureThroughput();
     io.emit('throughput_update', state.throughput);
-  }, 20000);
+  }, 20000));
 
-  // Monitoreo de tráfico en vivo en tiempo real de la interfaz activa cada 1 segundo
-  setInterval(updateLiveTrafficRate, 1000);
+  // Monitoreo de tráfico en vivo cada 1 segundo
+  intervals.push(setInterval(updateLiveTrafficRate, 1000));
+  
+  logger.info('Monitoreo iniciado correctamente');
 }
 
-// 
-// Start server
-// 
+/**
+ * @function stopMonitoring
+ * @description Detiene todos los intervalos de monitoreo
+ */
+function stopMonitoring() {
+  logger.info('Deteniendo monitoreo...');
+  intervals.forEach(interval => clearInterval(interval));
+  intervals.length = 0;
+}
+
+/**
+ * @function gracefulShutdown
+ * @description Cierre limpio del servidor
+ */
+function gracefulShutdown() {
+  logger.info('Iniciando cierre limpio del servidor...');
+  
+  stopMonitoring();
+  
+  // Cerrar conexiones Socket.IO
+  io.close();
+  
+  // Cerrar servidor HTTP
+  server.close(() => {
+    logger.info('Servidor cerrado correctamente');
+    process.exit(0);
+  });
+  
+  // Timeout de seguridad: forzar cierre después de 5 segundos
+  setTimeout(() => {
+    logger.error('Forzando cierre del servidor (timeout)');
+    process.exit(1);
+  }, 5000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INICIO DEL SERVIDOR
+// ═══════════════════════════════════════════════════════════
 
 server.listen(PORT, () => {
-  console.log(`╔════════════════════════════════════════╗`);
-  console.log(`║   NetScope Pro — Network Monitor       ║`);
-  console.log(`║   Dashboard: http://localhost:${PORT}       ║`);
-  console.log(`╚════════════════════════════════════════╝`);
+  logger.info('╔════════════════════════════════════════╗');
+  logger.info('║   NetScope Pro — Network Monitor       ║');
+  logger.info(`║   Dashboard: http://localhost:${PORT}       ║`);
+  logger.info('║   Universidad Privada del Norte        ║');
+  logger.info('╚════════════════════════════════════════╝');
   startMonitoring();
+});
+
+// Manejo de señales para cierre limpio
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
+
+// Manejo de excepciones no capturadas
+process.on('uncaughtException', (err) => {
+  logger.error('Excepción no capturada', { error: err.message, stack: err.stack });
+  gracefulShutdown();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Promise rechazada no manejada', { reason });
 });

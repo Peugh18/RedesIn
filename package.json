@@ -1,15 +1,24 @@
 {
-  "name": "hola",
+  "name": "netscope-pro",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Sistema de testeo y optimización de red inalámbrica para Universidad Privada del Norte",
+  "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "DEBUG=true node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "network",
+    "wifi",
+    "monitoring",
+    "testing",
+    "optimization",
+    "real-time",
+    "socket.io"
+  ],
+  "author": "Universidad Privada del Norte",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.16.0",
