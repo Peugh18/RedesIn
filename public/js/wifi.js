@@ -98,48 +98,76 @@ function requestWifiScan() {
 function renderChannelMap() {
   const chCount24 = {};
   const chCount5 = {};
+  const networks24 = {};
+  const networks5 = {};
 
   for (const n of allWifi) {
     const ch = n.channel || 0;
     if (n.frequency?.includes('5')) {
       chCount5[ch] = (chCount5[ch] || 0) + 1;
+      if (!networks5[ch]) networks5[ch] = [];
+      networks5[ch].push(n.ssid || '(Oculta)');
     } else {
       chCount24[ch] = (chCount24[ch] || 0) + 1;
+      if (!networks24[ch]) networks24[ch] = [];
+      networks24[ch].push(n.ssid || '(Oculta)');
     }
   }
 
-  const bars24 = document.getElementById('channelBars24');
-  if (!bars24) return;
-  bars24.innerHTML = '';
-  const max24 = Math.max(...Object.values(chCount24), 1);
-  for (let i = 1; i <= 13; i++) {
-    const count = chCount24[i] || 0;
-    const heightPct = count > 0 ? Math.max(10, Math.round((count / max24) * 100)) : 0;
-    const cls = count === 0 ? '' : count <= 2 ? 'low' : count <= 4 ? 'med' : 'high';
-    bars24.innerHTML += `<div class="ch-bar-wrap">
-      <div class="ch-bar ${cls}" style="height:${heightPct}%" title="Canal ${i}: ${count} redes"></div>
-      <div class="ch-label">${i}</div>
-    </div>`;
+  // Renderizar grid 2.4 GHz
+  const grid24 = document.getElementById('channelGrid24');
+  if (grid24) {
+    grid24.innerHTML = '';
+    for (let i = 1; i <= 13; i++) {
+      const count = chCount24[i] || 0;
+      const cellClass = getChannelCellClass(count);
+      const networks = networks24[i] || [];
+      const tooltip = networks.slice(0, 3).join(', ') + (networks.length > 3 ? '...' : '');
+      
+      grid24.innerHTML += `
+        <div class="channel-cell ${cellClass}" title="${tooltip}">
+          <div class="channel-cell-label">Ch ${i}</div>
+          <div class="channel-cell-count">${count}</div>
+          <div class="channel-tooltip">${tooltip}</div>
+        </div>
+      `;
+    }
   }
 
-  const bars5 = document.getElementById('channelBars5');
-  if (!bars5) return;
-  bars5.innerHTML = '';
-  const ch5Keys = Object.keys(chCount5).sort((a, b) => a - b);
-  if (ch5Keys.length === 0) {
-    bars5.innerHTML = '<span style="font-size:11px;color:var(--text-dim)">Sin redes 5GHz detectadas</span>';
-    return;
+  // Renderizar grid 5 GHz
+  const grid5 = document.getElementById('channelGrid5');
+  if (grid5) {
+    grid5.innerHTML = '';
+    const ch5Keys = Object.keys(chCount5).sort((a, b) => a - b);
+    if (ch5Keys.length === 0) {
+      grid5.innerHTML = '<span style="font-size:12px;color:var(--text-dim);padding:20px;text-align:center;grid-column:1/-1">Sin redes 5GHz detectadas</span>';
+    } else {
+      for (const ch of ch5Keys) {
+        const count = chCount5[ch];
+        const cellClass = getChannelCellClass(count);
+        const networks = networks5[ch] || [];
+        const tooltip = networks.slice(0, 3).join(', ') + (networks.length > 3 ? '...' : '');
+        
+        grid5.innerHTML += `
+          <div class="channel-cell ${cellClass}" title="${tooltip}">
+            <div class="channel-cell-label">Ch ${ch}</div>
+            <div class="channel-cell-count">${count}</div>
+            <div class="channel-tooltip">${tooltip}</div>
+          </div>
+        `;
+      }
+    }
   }
-  const max5 = Math.max(...Object.values(chCount5), 1);
-  for (const ch of ch5Keys) {
-    const count = chCount5[ch];
-    const heightPct = Math.max(10, Math.round((count / max5) * 100));
-    const cls = count <= 1 ? 'low' : count <= 2 ? 'med' : 'high';
-    bars5.innerHTML += `<div class="ch-bar-wrap">
-      <div class="ch-bar ${cls}" style="height:${heightPct}%" title="Canal ${ch}: ${count} redes"></div>
-      <div class="ch-label">${ch}</div>
-    </div>`;
-  }
+}
+
+/**
+ * Determinar clase CSS del canal según congestión
+ */
+function getChannelCellClass(count) {
+  if (count === 0) return 'free';
+  if (count === 1) return 'medium';
+  if (count <= 3) return 'congested';
+  return 'saturated';
 }
 
 function renderChannelRecommendation(rec) {

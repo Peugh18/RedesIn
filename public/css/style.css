@@ -1106,3 +1106,330 @@ body {
   color: var(--text-dim);
   margin-top: 2px;
 }
+
+/* ══════════════════════════════════════════
+   DASHBOARD MEJORADO
+   ══════════════════════════════════════════ */
+.dashboard-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* WIDGET DE SALUD DE RED */
+.health-widget {
+  position: relative;
+}
+.health-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  gap: 24px;
+}
+.health-gauge {
+  flex: 0 0 140px;
+  height: 140px;
+}
+.health-stats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.health-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.health-stat:last-child {
+  border-bottom: none;
+}
+.stat-label {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* WIDGET DE DISTRIBUCIÓN */
+.distribution-widget {
+  position: relative;
+}
+.distribution-content {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.distribution-chart {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.distribution-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  padding: 4px 0;
+}
+.legend-label {
+  color: var(--text-sec);
+}
+.legend-count {
+  color: var(--cyan);
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* MATRIZ DE CALIDAD */
+.quality-matrix {
+  margin-bottom: 20px;
+}
+.quality-table-wrap {
+  overflow-x: auto;
+}
+.quality-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.quality-table thead {
+  background: rgba(255,255,255,0.02);
+  border-bottom: 2px solid var(--border);
+}
+.quality-table th {
+  padding: 12px;
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 11px;
+}
+.quality-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-pri);
+}
+.quality-row.offline {
+  opacity: 0.5;
+}
+.quality-row.offline .device-name {
+  color: var(--text-dim);
+}
+.device-name {
+  font-weight: 500;
+  color: var(--cyan);
+}
+.metric {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+.metric.good {
+  color: #00e676;
+}
+.metric.warning {
+  color: #ff9800;
+}
+.metric.bad {
+  color: #ff4757;
+}
+.metric.unknown {
+  color: var(--text-dim);
+}
+.signal {
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+.status {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* ESTADÍSTICAS DE UPTIME */
+.uptime-stat {
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(253,186,48,0.1) 0%, rgba(0,230,118,0.05) 100%);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.uptime-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 8px;
+}
+.uptime-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* COMPARATIVA ANTES/DESPUÉS */
+.comparison-widget {
+  margin-bottom: 20px;
+}
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+.comparison-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.comp-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.comp-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.comp-value > span:first-child {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+}
+.comp-change {
+  font-size: 12px;
+  font-weight: 600;
+}
+.change-good {
+  color: #00e676;
+}
+.change-bad {
+  color: #ff4757;
+}
+.change-neutral {
+  color: var(--text-dim);
+}
+
+/* ══════════════════════════════════════════
+   MAPA DE CANALES MEJORADO
+   ══════════════════════════════════════════ */
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.channel-cell {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  font-weight: 600;
+  font-size: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.channel-cell:hover {
+  transform: scale(1.05);
+  border-color: rgba(255,255,255,0.3);
+  box-shadow: 0 0 12px rgba(253,186,48,0.3);
+}
+.channel-cell.free {
+  background: rgba(0,230,118,0.2);
+  color: #00e676;
+  border-color: rgba(0,230,118,0.3);
+}
+.channel-cell.medium {
+  background: rgba(253,186,48,0.2);
+  color: #fdba30;
+  border-color: rgba(253,186,48,0.3);
+}
+.channel-cell.congested {
+  background: rgba(255,152,0,0.2);
+  color: #ff9800;
+  border-color: rgba(255,152,0,0.3);
+}
+.channel-cell.saturated {
+  background: rgba(255,71,87,0.2);
+  color: #ff4757;
+  border-color: rgba(255,71,87,0.3);
+}
+.channel-cell-label {
+  font-size: 10px;
+  opacity: 0.7;
+}
+.channel-cell-count {
+  font-size: 14px;
+  font-weight: 700;
+}
+.channel-tooltip {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+.channel-cell:hover .channel-tooltip {
+  opacity: 1;
+}
+.channel-heat-legend {
+  display: flex;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.heat-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-sec);
+}
+.heat-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
