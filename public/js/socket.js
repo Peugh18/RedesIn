@@ -14,16 +14,23 @@ function initSocket() {
     setStatus('error', 'Desconectado');
   });
 
+  socket.on('diagnostic_report_ready', (data) => {
+    if (typeof renderDiagnosticReport === 'function') {
+      currentDiagnosticReport = data;
+      renderDiagnosticReport(data);
+    }
+  });
+
   socket.on('devices_update', (data) => {
     if (data.devices) {
       allDevices = data.devices;
       renderDevices();
+      if (typeof renderDashboard === 'function') renderDashboard();
       updateMetrics();
     }
     if (data.networkInfo) updateNetInfo(data.networkInfo);
     if (data.alerts) {
       alerts = data.alerts;
-      renderAlerts();
     }
     setStatus('connected', `Actualizado ${new Date().toLocaleTimeString('es-MX', { hour12: false })}`);
   });
@@ -34,7 +41,7 @@ function initSocket() {
       allWifi = data.networks;
       renderWifi();
       renderChannelMap();
-      renderSecurityPanel();
+      if (typeof renderRssiAnalysis === 'function') renderRssiAnalysis();
       updateMetrics();
     } else if (data.note && allWifi.length > 0) {
       // Backend indica que mantiene redes anteriores - no hacer nada
@@ -72,10 +79,7 @@ function initSocket() {
   });
 
   socket.on('traffic_rate_update', (data) => {
-    if (!data) return;
-    if (typeof updateTrafficDataReal === 'function') {
-      updateTrafficDataReal(data.download, data.upload);
-    }
+    // Ignorado en L1 Diagnostics
   });
 }
 
@@ -153,18 +157,18 @@ async function loadInitialState() {
     if (data.devices?.length) {
       allDevices = data.devices;
       renderDevices();
+      if (typeof renderDashboard === 'function') renderDashboard();
     }
     if (data.wifiNetworks?.length) {
       allWifi = data.wifiNetworks;
       renderWifi();
+      if (typeof renderRssiAnalysis === 'function') renderRssiAnalysis();
     }
     if (data.alerts?.length) {
       alerts = data.alerts;
-      renderAlerts();
     }
     if (data.networkInfo) updateNetInfo(data.networkInfo);
     if (data.channelRecommendation) renderChannelRecommendation(data.channelRecommendation);
-    renderSecurityPanel();
     updateMetrics();
   } catch (e) {
     setStatus('error', 'No se puede conectar al servidor');

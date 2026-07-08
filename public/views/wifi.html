@@ -1,6 +1,6 @@
 <div class="view-header">
   <h1 class="view-title">WiFi & Canales</h1>
-  <p class="view-subtitle">Análisis de cobertura WiFi - Campus Universitario UPN</p>
+  <p class="view-subtitle">Escaneo en tiempo real de redes inalámbricas, cobertura y análisis de señal</p>
 </div>
 
 <div class="wifi-grid">
@@ -67,6 +67,24 @@
           <span class="rec-channel" id="recChannel5">—</span>
           <span class="rec-detail" id="recDetail5"></span>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL ANÁLISIS RSSI -->
+  <div class="panel" style="grid-column: 1 / -1;">
+    <div class="panel-header">
+      <div class="panel-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Análisis de Señal (RSSI) — Diagnóstico de Cobertura
+      </div>
+    </div>
+    <div style="padding: 16px;">
+      <p style="font-size: 12px; color: var(--text-sec); margin-bottom: 14px;">
+        Clasifica cada red Wi-Fi detectada según su nivel de señal (dBm) para identificar zonas de cobertura crítica o débil que expliquen la mala conectividad reportada por el usuario.
+      </p>
+      <div id="rssiAnalysisPanel">
+        <p style="font-size:12px;color:var(--text-dim);">Cargando datos de señal...</p>
       </div>
     </div>
   </div>

@@ -201,9 +201,9 @@ function buildDeviceRow(d) {
   const safeIp = d.ip ? escapeHtml(d.ip) : '';
   if (!safeIp) return '';
 
-  return `<tr onclick="openModal('${safeIp}')" class="fade-in">
+  return `<tr class="fade-in">
     <td>${statusBadge}</td>
-    <td class="ip-cell">${d.ip}</td>
+    <td class="ip-cell" onclick="openModal('${safeIp}')" style="cursor:pointer; color:var(--cyan); text-decoration:underline;">${d.ip}</td>
     <td class="hostname-cell">${escapeHtml(d.hostname || d.ip)}${localTag}</td>
     <td class="mac-cell">${mac}</td>
     <td style="font-size:11px;color:var(--text-sec);max-width:100px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(vendor)}</td>
@@ -213,7 +213,12 @@ function buildDeviceRow(d) {
     <td>${jitterStr}</td>
     <td>${lossStr}</td>
     <td>${qualityBadge}</td>
-    <td>${spark}</td>
+    <td>
+      <button class="btn" style="background:var(--cyan); color:#fff; border:none; padding:4px 8px; font-size:11px; border-radius:4px; cursor:pointer;" onclick="requestDiagnosticFor('${safeIp}', event)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px;vertical-align:middle;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Diagnosticar
+      </button>
+    </td>
   </tr>`;
 }
 

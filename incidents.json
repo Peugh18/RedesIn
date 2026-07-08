@@ -1,0 +1,107 @@
+[
+  {
+    "id_diagnostico": "DIAG-20260708-7235",
+    "fecha_hora_analisis": "2026-07-08T06:48:16.265Z",
+    "estado_incidente": "Pendiente",
+    "dispositivo_evaluado": {
+      "ip": "192.168.18.7",
+      "mac": "A6:EF:28:BA:DF:58",
+      "fabricante": "Desconocido",
+      "hostname": "Device-7"
+    },
+    "diagnostico_tecnico": {
+      "sintoma_principal": "Funcionamiento aparente normal",
+      "causa_probable": "El dispositivo no presenta anomalías de red en Capa 1 a 3.",
+      "nivel_confianza": "Alto",
+      "severidad": "Informativa",
+      "regla_aplicada": "N/A"
+    },
+    "evidencias_tecnicas": [
+      "Latencia estable: 5ms, Jitter: 117.41ms, Loss: 0%",
+      "Sin colisiones ARP detectadas."
+    ],
+    "asistencia_operativa": {
+      "accion_sugerida": "Verificar rendimiento de Capa de Aplicación (DNS, HTTP) o recursos del equipo local (CPU/RAM).",
+      "nivel_escalamiento_sugerido": "Nivel 1"
+    }
+  },
+  {
+    "id_diagnostico": "DIAG-20260708-7235",
+    "fecha_hora_analisis": "2026-07-08T06:48:16.265Z",
+    "estado_incidente": "Pendiente",
+    "dispositivo_evaluado": {
+      "ip": "192.168.18.7",
+      "mac": "A6:EF:28:BA:DF:58",
+      "fabricante": "Desconocido",
+      "hostname": "Device-7"
+    },
+    "diagnostico_tecnico": {
+      "sintoma_principal": "Funcionamiento aparente normal",
+      "causa_probable": "El dispositivo no presenta anomalías de red en Capa 1 a 3.",
+      "nivel_confianza": "Alto",
+      "severidad": "Informativa",
+      "regla_aplicada": "N/A"
+    },
+    "evidencias_tecnicas": [
+      "Latencia estable: 5ms, Jitter: 117.41ms, Loss: 0%",
+      "Sin colisiones ARP detectadas."
+    ],
+    "asistencia_operativa": {
+      "accion_sugerida": "Verificar rendimiento de Capa de Aplicación (DNS, HTTP) o recursos del equipo local (CPU/RAM).",
+      "nivel_escalamiento_sugerido": "Nivel 1"
+    }
+  },
+  {
+    "id_diagnostico": "DIAG-20260708-5275",
+    "fecha_hora_analisis": "2026-07-08T06:49:43.344Z",
+    "estado_incidente": "Pendiente",
+    "dispositivo_evaluado": {
+      "ip": "192.168.18.9",
+      "mac": "D8:AD:49:BE:9F:4D",
+      "fabricante": "Honor Device Co., Ltd.",
+      "hostname": "Device-9"
+    },
+    "diagnostico_tecnico": {
+      "sintoma_principal": "Lentitud de red",
+      "causa_probable": "El dispositivo no presenta anomalías de red en Capa 1 a 3.",
+      "nivel_confianza": "Alto",
+      "severidad": "Informativa",
+      "regla_aplicada": "N/A"
+    },
+    "evidencias_tecnicas": [
+      "Latencia estable: 151ms, Jitter: 87.92ms, Loss: 0%",
+      "Sin colisiones ARP detectadas."
+    ],
+    "asistencia_operativa": {
+      "accion_sugerida": "Verificar rendimiento de Capa de Aplicación (DNS, HTTP) o recursos del equipo local (CPU/RAM).",
+      "nivel_escalamiento_sugerido": "Nivel 1"
+    }
+  },
+  {
+    "id_diagnostico": "DIAG-20260708-4443",
+    "fecha_hora_analisis": "2026-07-08T08:10:23.591Z",
+    "estado_incidente": "Pendiente",
+    "dispositivo_evaluado": {
+      "ip": "192.168.18.7",
+      "mac": "A6:EF:28:BA:DF:58",
+      "fabricante": "Desconocido",
+      "hostname": "Device-7"
+    },
+    "diagnostico_tecnico": {
+      "sintoma_principal": "Lentitud de red",
+      "causa_probable": "Deficiencia en el cableado estructurado o desajuste de velocidad/dúplex en el Switch.",
+      "nivel_confianza": "Medio",
+      "severidad": "Baja",
+      "regla_aplicada": "Regla 4: Degradación de Capa Física LAN"
+    },
+    "evidencias_tecnicas": [
+      "Tipo de Medio: Ethernet LAN.",
+      "Packet Loss: 0%.",
+      "Jitter (Fluctuación): 113.66ms."
+    ],
+    "asistencia_operativa": {
+      "accion_sugerida": "Reemplazar el cable UTP del dispositivo (Patch Cord) o probar otra roseta.",
+      "nivel_escalamiento_sugerido": "Nivel 1. Escalar a L2 si persiste para revisar FCS/CRC errors en switch."
+    }
+  }
+]

@@ -23,7 +23,5 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadAllViews();
   initSocket();
   loadInitialState();
-  if (typeof Chart !== 'undefined') {
-    initTrafficChart();
-  }
+
 });

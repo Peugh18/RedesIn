@@ -189,3 +189,99 @@ function renderChannelRecommendation(rec) {
   if (det5) det5.textContent =
     rec.recommended5.interference === 0 ? 'Sin interferencia' : `Interferencia: ${rec.recommended5.interference}`;
 }
+
+/**
+ * Análisis de Señal RSSI: clasifica cada red Wi-Fi detectada
+ * según su nivel de señal para asistir al técnico L1 en diagnóstico de cobertura.
+ */
+function renderRssiAnalysis() {
+  const container = document.getElementById('rssiAnalysisPanel');
+  if (!container) return;
+
+  if (!allWifi || allWifi.length === 0) {
+    container.innerHTML = '<p style="font-size:12px;color:var(--text-dim);padding:10px 0;">Sin redes Wi-Fi detectadas. Ejecutar como Administrador para habilitar el escaneo.</p>';
+    return;
+  }
+
+  // Umbral de recepción confiable para comunicación Wi-Fi operativa
+  const THRESHOLD_EXCELLENT = -50;  // Excelente: señal máxima
+  const THRESHOLD_GOOD = -65;       // Buena: comunicación estable
+  const THRESHOLD_FAIR = -75;       // Aceptable: posible degradación
+  // Por debajo de -75 dBm = señal crítica, comunicación no confiable
+
+  const sorted = [...allWifi].sort((a, b) => (b.rssi || -100) - (a.rssi || -100));
+
+  let countCritical = 0;
+  let countWeak = 0;
+  let countGood = 0;
+
+  const rows = sorted.map(n => {
+    const rssi = n.rssi ?? null;
+    let statusLabel = '—';
+    let statusColor = 'var(--text-dim)';
+    let l1Action = '';
+
+    if (rssi === null) {
+      statusLabel = 'Sin datos';
+      statusColor = 'var(--text-dim)';
+    } else if (rssi >= THRESHOLD_EXCELLENT) {
+      statusLabel = 'Excelente';
+      statusColor = 'var(--green)';
+      countGood++;
+      l1Action = 'Cobertura óptima. No requiere acción.';
+    } else if (rssi >= THRESHOLD_GOOD) {
+      statusLabel = 'Buena';
+      statusColor = 'var(--cyan)';
+      countGood++;
+      l1Action = 'Señal estable. Comunicación confiable.';
+    } else if (rssi >= THRESHOLD_FAIR) {
+      statusLabel = 'Débil';
+      statusColor = 'var(--yellow)';
+      countWeak++;
+      l1Action = 'Posible degradación. Verificar distancia al AP o interferencias.';
+    } else {
+      statusLabel = 'Crítica';
+      statusColor = 'var(--red)';
+      countCritical++;
+      l1Action = 'Señal insuficiente para comunicación confiable. Reubicar equipo o agregar AP.';
+    }
+
+    const barWidth = rssi !== null ? Math.max(0, Math.min(100, ((rssi + 100) / 70) * 100)) : 0;
+    const barColor = statusColor;
+
+    return `
+      <div style="background:var(--bg-dark); border-radius:6px; padding:10px 12px; border-left:3px solid ${statusColor};">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-main);">${escapeHtml(n.ssid || '(Oculta)')}</div>
+            <div style="font-size:10px;color:var(--text-dim);">Canal ${n.channel || '?'} · ${n.frequency || '?'} · ${n.bssid || '—'}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:16px;font-weight:700;color:${statusColor};">${rssi !== null ? rssi + ' dBm' : '—'}</div>
+            <div style="font-size:10px;font-weight:600;color:${statusColor};">${statusLabel}</div>
+          </div>
+        </div>
+        <div style="height:4px;background:var(--border-color);border-radius:2px;margin-bottom:6px;">
+          <div style="height:4px;width:${barWidth}%;background:${barColor};border-radius:2px;transition:width 0.5s;"></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);">${l1Action}</div>
+      </div>`;
+  }).join('');
+
+  // Resumen ejecutivo para el técnico L1
+  const summaryColor = countCritical > 0 ? 'var(--red)' : countWeak > 0 ? 'var(--yellow)' : 'var(--green)';
+  const summaryText = countCritical > 0
+    ? `${countCritical} red(es) con señal crítica detectada(s). Revisar cobertura del AP urgente.`
+    : countWeak > 0
+    ? `${countWeak} red(es) con señal débil. Pueden causar cortes intermitentes al usuario.`
+    : `Todas las redes detectadas (${countGood}) presentan señal óptima.`;
+
+  container.innerHTML = `
+    <div style="margin-bottom:12px; padding:10px; background:${summaryColor}22; border:1px solid ${summaryColor}55; border-radius:6px;">
+      <div style="font-size:11px;text-transform:uppercase;color:${summaryColor};font-weight:700;margin-bottom:2px;">Evaluación de Cobertura</div>
+      <div style="font-size:12px;color:var(--text-main);">${summaryText}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">${rows}</div>
+  `;
+}
+

@@ -4,7 +4,7 @@
  */
 
 const viewCache = {};
-const VIEW_NAMES = ['dashboard', 'devices', 'wifi', 'security', 'topology', 'traceroute', 'alerts'];
+const VIEW_NAMES = ['dashboard', 'devices', 'wifi', 'speedtest'];
 
 async function loadView(viewName) {
   if (viewCache[viewName]) return viewCache[viewName];
@@ -44,11 +44,10 @@ function switchView(viewName) {
   }
 
   // Re-render view-specific content after switch
+  if (viewName === 'dashboard') renderDashboard();
   if (viewName === 'devices') renderDevices();
-  if (viewName === 'wifi') { renderWifi(); renderChannelMap(); }
-  if (viewName === 'security') renderSecurityPanel();
-  if (viewName === 'topology') loadTopology();
-  if (viewName === 'alerts') renderAlerts();
+  if (viewName === 'wifi') { renderWifi(); renderChannelMap(); renderRssiAnalysis(); }
+  if (viewName === 'speedtest') renderSpeedtest();
 }
 
 function toggleSidebar() {

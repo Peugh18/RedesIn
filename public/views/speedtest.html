@@ -1,0 +1,80 @@
+<div class="view-header" style="display: flex; justify-content: space-between; align-items: center;">
+  <div>
+    <h2 class="view-title">Test de Rendimiento y Velocidad</h2>
+    <p class="view-subtitle">Medición y diagnóstico de velocidad de descarga, subida, latencia y fluctuación (Jitter) de red</p>
+  </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+  <!-- Panel Principal del Test -->
+  <div style="background: var(--bg-card); padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; position: relative;">
+    
+    <!-- Animación/Progreso del Velocímetro -->
+    <div style="position: relative; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center; margin-bottom: 30px;">
+      <svg style="transform: rotate(-90deg); width: 200px; height: 200px;">
+        <circle cx="100" cy="100" r="80" stroke="var(--border-color)" stroke-width="8" fill="transparent" />
+        <circle id="speedProgressCircle" cx="100" cy="100" r="80" stroke="var(--cyan)" stroke-width="12" fill="transparent" 
+                stroke-dasharray="502" stroke-dashoffset="502" style="transition: stroke-dashoffset 0.5s ease; stroke-linecap: round;" />
+      </svg>
+      <div style="position: absolute; text-align: center;">
+        <div id="speedValue" style="font-size: 40px; font-weight: bold; color: var(--text-main); line-height: 1;">0.00</div>
+        <div style="font-size: 14px; color: var(--text-sec); margin-top: 5px;">Mbps</div>
+        <div id="speedStage" style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; margin-top: 5px; font-weight: 600; letter-spacing: 1px;">Listo</div>
+      </div>
+    </div>
+
+    <!-- Resultados -->
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; border-top: 1px solid var(--border-color); padding-top: 25px; text-align: center;">
+      <div>
+        <div style="font-size: 11px; color: var(--text-sec); text-transform: uppercase;">Descarga</div>
+        <div id="resultDownload" style="font-size: 22px; font-weight: bold; color: var(--cyan); margin-top: 5px;">— Mbps</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-sec); text-transform: uppercase;">Subida</div>
+        <div id="resultUpload" style="font-size: 22px; font-weight: bold; color: var(--cyan); margin-top: 5px;">— Mbps</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-sec); text-transform: uppercase;">Ping / Latencia</div>
+        <div id="resultLatency" style="font-size: 22px; font-weight: bold; color: var(--yellow); margin-top: 5px;">— ms</div>
+      </div>
+      <div>
+        <div style="font-size: 11px; color: var(--text-sec); text-transform: uppercase;">Jitter</div>
+        <div id="resultJitter" style="font-size: 22px; font-weight: bold; color: var(--orange); margin-top: 5px;">— ms</div>
+      </div>
+    </div>
+
+    <!-- Botón de Inicio -->
+    <button class="btn" id="btnStartSpeedTest" onclick="startRealSpeedTest()" style="margin-top: 30px; background: var(--cyan); color: #fff; padding: 12px 30px; font-size: 14px; font-weight: 600; border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar Test de Velocidad Real
+    </button>
+  </div>
+
+  <!-- Panel de Diagnóstico y Optimización del Test -->
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    <!-- Caja 1: Análisis del Test de Velocidad -->
+    <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" style="width:16px;height:16px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        Diagnóstico de Rendimiento
+      </h3>
+      <div id="speedtestStatusContent" style="font-size: 12px; line-height: 1.5; color: var(--text-sec);">
+        Inicie el test de velocidad para evaluar la calidad actual de la conexión de red del usuario.
+      </div>
+    </div>
+
+    <!-- Caja 2: Concurrencia de Red -->
+    <div style="background: var(--bg-card); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color);">
+      <h3 style="font-size: 14px; font-weight: 600; color: var(--text-main); margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" style="width:16px;height:16px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Concurrencia de Dispositivos Activos
+      </h3>
+      <p style="font-size: 11px; color: var(--text-dim); margin-bottom: 10px;">
+        Otros dispositivos activos en el mismo segmento de red que consumen ancho de banda:
+      </p>
+      <div id="speedtestDevicesList" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+        <!-- Lista de otros dispositivos conectados -->
+      </div>
+    </div>
+  </div>
+</div>
